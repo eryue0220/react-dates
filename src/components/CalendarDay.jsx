@@ -24,6 +24,7 @@ const propTypes = forbidExtraProps({
   onDayMouseEnter: PropTypes.func,
   onDayMouseLeave: PropTypes.func,
   renderDay: PropTypes.func,
+  ariaLabelFormat: PropTypes.string,
 
   // internationalization
   phrases: PropTypes.shape(getPhrasePropTypes(CalendarDayPhrases)),
@@ -40,6 +41,7 @@ const defaultProps = {
   onDayMouseEnter() {},
   onDayMouseLeave() {},
   renderDay: null,
+  ariaLabelFormat: 'dddd, LL',
 
   // internationalization
   phrases: CalendarDayPhrases,
@@ -87,6 +89,7 @@ class CalendarDay extends React.Component {
   render() {
     const {
       day,
+      ariaLabelFormat,
       daySize,
       isOutsideDay,
       modifiers,
@@ -101,7 +104,7 @@ class CalendarDay extends React.Component {
 
     if (!day) return <td />;
 
-    const formattedDate = { date: `${day.format('dddd')}, ${day.format('LL')}` };
+    const formattedDate = { date: day.format(ariaLabelFormat) };
 
     const ariaLabel = modifiers.has(BLOCKED_MODIFIER)
       ? getPhrase(dateIsUnavailable, formattedDate)
@@ -136,6 +139,7 @@ class CalendarDay extends React.Component {
         {...css(
           styles.CalendarDay_container,
           isOutsideDay && styles.CalendarDay__outside,
+          modifiers.has('today') && styles.CalendarDay__today,
           modifiers.has('highlighted-calendar') && styles.CalendarDay__highlighted_calendar,
           modifiers.has('blocked-minimum-nights') && styles.CalendarDay__blocked_minimum_nights,
           modifiers.has('blocked-calendar') && styles.CalendarDay__blocked_calendar,
@@ -180,7 +184,7 @@ export default withStyles(({ reactDates: { color } }) => ({
     padding: 0,
     boxSizing: 'border-box',
     color: color.text,
-    background: '#fff',
+    background: color.background,
 
     ':hover': {
       background: color.core.borderLight,
@@ -348,5 +352,5 @@ export default withStyles(({ reactDates: { color } }) => ({
 
   CalendarDay__selected_start: {},
   CalendarDay__selected_end: {},
-
+  CalendarDay__today: {},
 }))(CalendarDay);
