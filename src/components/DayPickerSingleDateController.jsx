@@ -55,6 +55,7 @@ const propTypes = forbidExtraProps({
   daySize: nonNegativeInteger,
   verticalHeight: nonNegativeInteger,
   noBorder: PropTypes.bool,
+  transitionDuration: nonNegativeInteger,
 
   navPrev: PropTypes.node,
   navNext: PropTypes.node,
@@ -62,7 +63,8 @@ const propTypes = forbidExtraProps({
   onPrevMonthClick: PropTypes.func,
   onNextMonthClick: PropTypes.func,
   onOutsideClick: PropTypes.func,
-  renderDay: PropTypes.func,
+  renderCalendarDay: PropTypes.func,
+  renderDayContents: PropTypes.func,
   renderCalendarInfo: PropTypes.func,
 
   // accessibility
@@ -104,6 +106,7 @@ const defaultProps = {
   daySize: DAY_SIZE,
   verticalHeight: null,
   noBorder: false,
+  transitionDuration: undefined,
 
   navPrev: null,
   navNext: null,
@@ -112,7 +115,8 @@ const defaultProps = {
   onNextMonthClick() {},
   onOutsideClick: null,
 
-  renderDay: null,
+  renderCalendarDay: undefined,
+  renderDayContents: null,
   renderCalendarInfo: null,
 
   // accessibility
@@ -581,7 +585,8 @@ export default class DayPickerSingleDateController extends React.Component {
       hideKeyboardShortcutsPanel,
       daySize,
       firstDayOfWeek,
-      renderDay,
+      renderCalendarDay,
+      renderDayContents,
       renderCalendarInfo,
       isFocused,
       isRTL,
@@ -593,6 +598,7 @@ export default class DayPickerSingleDateController extends React.Component {
       weekDayFormat,
       verticalHeight,
       noBorder,
+      transitionDuration,
     } = this.props;
 
     const { currentMonth, visibleDays } = this.state;
@@ -617,7 +623,8 @@ export default class DayPickerSingleDateController extends React.Component {
         navPrev={navPrev}
         navNext={navNext}
         renderMonth={renderMonth}
-        renderDay={renderDay}
+        renderCalendarDay={renderCalendarDay}
+        renderDayContents={renderDayContents}
         renderCalendarInfo={renderCalendarInfo}
         isFocused={isFocused}
         getFirstFocusableDay={this.getFirstFocusableDay}
@@ -630,6 +637,7 @@ export default class DayPickerSingleDateController extends React.Component {
         dayAriaLabelFormat={dayAriaLabelFormat}
         verticalHeight={verticalHeight}
         noBorder={noBorder}
+        transitionDuration={transitionDuration}
       />
     );
 

@@ -223,7 +223,7 @@ storiesOf('DayPickerRangeController', module)
       onOutsideClick={action('DayPickerRangeController::onOutsideClick')}
       onPrevMonthClick={action('DayPickerRangeController::onPrevMonthClick')}
       onNextMonthClick={action('DayPickerRangeController::onNextMonthClick')}
-      renderDay={day => day.format('ddd')}
+      renderDayContents={day => day.format('ddd')}
     />
   ))
   .addWithInfo('with info panel', () => (
@@ -234,5 +234,13 @@ storiesOf('DayPickerRangeController', module)
       renderCalendarInfo={() => (
         <TestCustomInfoPanel />
       )}
+    />
+  ))
+  .addWithInfo('with no animation', () => (
+    <DayPickerRangeControllerWrapper
+      onOutsideClick={action('DayPickerRangeController::onOutsideClick')}
+      onPrevMonthClick={action('DayPickerRangeController::onPrevMonthClick')}
+      onNextMonthClick={action('DayPickerRangeController::onNextMonthClick')}
+      transitionDuration={0}
     />
   ));

@@ -99,7 +99,7 @@ storiesOf('DayPicker', module)
   ))
   .addWithInfo('with custom details', () => (
     <DayPicker
-      renderDay={day => (day.day() % 6 === 5 ? '😻' : day.format('D'))}
+      renderDayContents={day => (day.day() % 6 === 5 ? '😻' : day.format('D'))}
     />
   ))
   .addWithInfo('vertical with fixed-width container', () => (
@@ -120,6 +120,11 @@ storiesOf('DayPicker', module)
   .addWithInfo('with custom week day format', () => (
     <DayPicker
       weekDayFormat="ddd"
+    />
+  ))
+  .addWithInfo('with no animation', () => (
+    <DayPicker
+      transitionDuration={0}
     />
   ))
   .addWithInfo('noBorder', () => (

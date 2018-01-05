@@ -152,5 +152,17 @@ storiesOf('SDP - Calendar Props', module)
       onClose={({ date }) => alert(`onClose: date = ${date}`)}
       autoFocus
     />
+  ))
+  .addWithInfo('with no animation', () => (
+    <SingleDatePickerWrapper
+      transitionDuration={0}
+      autoFocus
+    />
+  ))
+  .addWithInfo('with custom vertical spacing', () => (
+    <SingleDatePickerWrapper
+      verticalSpacing={0}
+      autoFocus
+    />
   ));
 

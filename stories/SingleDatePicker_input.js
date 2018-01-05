@@ -77,4 +77,18 @@ storiesOf('SDP - Input Props', module)
       initialDate={moment().add(3, 'days')}
       noBorder
     />
+  ))
+  .addWithInfo('block styling', () => (
+    <SingleDatePickerWrapper
+      initialDate={moment().add(3, 'days')}
+      showClearDate
+      block
+    />
+  ))
+  .addWithInfo('small styling', () => (
+    <SingleDatePickerWrapper
+      initialDate={moment().add(3, 'days')}
+      showClearDate
+      small
+    />
   ));

@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { forbidExtraProps } from 'airbnb-prop-types';
+import { forbidExtraProps, nonNegativeInteger } from 'airbnb-prop-types';
 import { css, withStyles, withStylesPropTypes } from 'react-with-styles';
 
 import { SingleDatePickerInputPhrases } from '../defaultPhrases';
@@ -35,6 +35,9 @@ const propTypes = forbidExtraProps({
   customInputIcon: PropTypes.node,
   isRTL: PropTypes.bool,
   noBorder: PropTypes.bool,
+  block: PropTypes.bool,
+  small: PropTypes.bool,
+  verticalSpacing: nonNegativeInteger,
 
   onChange: PropTypes.func,
   onClearDate: PropTypes.func,
@@ -66,6 +69,8 @@ const defaultProps = {
   customInputIcon: null,
   isRTL: false,
   noBorder: false,
+  block: false,
+  verticalSpacing: undefined,
 
   onChange() {},
   onClearDate() {},
@@ -106,13 +111,21 @@ function SingleDatePickerInput({
   openDirection,
   isRTL,
   noBorder,
+  block,
+  small,
+  verticalSpacing,
   styles,
 }) {
   const calendarIcon = customInputIcon || (
     <CalendarIcon {...css(styles.SingleDatePickerInput_calendarIcon_svg)} />
   );
   const closeIcon = customCloseIcon || (
-    <CloseButton {...css(styles.SingleDatePickerInput_clearDate_svg)} />
+    <CloseButton
+      {...css(
+        styles.SingleDatePickerInput_clearDate_svg,
+        styles.SingleDatePickerInput_clearDate_svg__small,
+      )}
+    />
   );
 
   const screenReaderText = screenReaderMessage || phrases.keyboardNavigationInstructions;
@@ -135,6 +148,8 @@ function SingleDatePickerInput({
         disabled && styles.SingleDatePickerInput__disabled,
         isRTL && styles.SingleDatePickerInput__rtl,
         !noBorder && styles.SingleDatePickerInput__withBorder,
+        block && styles.SingleDatePickerInput__block,
+        showClearDate && styles.SingleDatePickerInput__showClearDate,
       )}
     >
       {inputIconPosition === ICON_BEFORE_POSITION && inputIcon}
@@ -157,12 +172,16 @@ function SingleDatePickerInput({
         onKeyDownArrowDown={onKeyDownArrowDown}
         onKeyDownQuestionMark={onKeyDownQuestionMark}
         openDirection={openDirection}
+        verticalSpacing={verticalSpacing}
+        small={small}
       />
 
       {showClearDate && (
         <button
           {...css(
             styles.SingleDatePickerInput_clearDate,
+            small && styles.SingleDatePickerInput_clearDate__small,
+            !customCloseIcon && styles.SingleDatePickerInput_clearDate__default,
             !displayValue && styles.SingleDatePickerInput_clearDate__hide,
           )}
           type="button"
@@ -187,6 +206,7 @@ SingleDatePickerInput.defaultProps = defaultProps;
 
 export default withStyles(({ reactDates: { color } }) => ({
   SingleDatePickerInput: {
+    display: 'inline-block',
     backgroundColor: color.background,
   },
 
@@ -202,6 +222,14 @@ export default withStyles(({ reactDates: { color } }) => ({
     backgroundColor: color.disabled,
   },
 
+  SingleDatePickerInput__block: {
+    display: 'block',
+  },
+
+  SingleDatePickerInput__showClearDate: {
+    paddingRight: 30,
+  },
+
   SingleDatePickerInput_clearDate: {
     background: 'none',
     border: 0,
@@ -211,11 +239,15 @@ export default withStyles(({ reactDates: { color } }) => ({
     overflow: 'visible',
 
     cursor: 'pointer',
-    display: 'inline-block',
-    verticalAlign: 'middle',
     padding: 10,
     margin: '0 10px 0 5px',
+    position: 'absolute',
+    right: 0,
+    top: '50%',
+    transform: 'translateY(-50%)',
+  },
 
+  SingleDatePickerInput_clearDate__default: {
     ':focus': {
       background: color.core.border,
       borderRadius: '50%',
@@ -227,6 +259,10 @@ export default withStyles(({ reactDates: { color } }) => ({
     },
   },
 
+  SingleDatePickerInput_clearDate__small: {
+    padding: 6,
+  },
+
   SingleDatePickerInput_clearDate__hide: {
     visibility: 'hidden',
   },
@@ -236,6 +272,10 @@ export default withStyles(({ reactDates: { color } }) => ({
     height: 12,
     width: 15,
     verticalAlign: 'middle',
+  },
+
+  SingleDatePickerInput_clearDate_svg__small: {
+    height: 9,
   },
 
   SingleDatePickerInput_calendarIcon: {

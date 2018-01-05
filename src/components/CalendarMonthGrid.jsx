@@ -42,7 +42,8 @@ const propTypes = forbidExtraProps({
   onDayMouseLeave: PropTypes.func,
   onMonthTransitionEnd: PropTypes.func,
   renderMonth: PropTypes.func,
-  renderDay: PropTypes.func,
+  renderCalendarDay: PropTypes.func,
+  renderDayContents: PropTypes.func,
   transformValue: PropTypes.string,
   daySize: nonNegativeInteger,
   focusedDate: momentPropTypes.momentObj, // indicates focusable day
@@ -50,6 +51,7 @@ const propTypes = forbidExtraProps({
   firstDayOfWeek: DayOfWeekShape,
   setCalendarMonthHeights: PropTypes.func,
   isRTL: PropTypes.bool,
+  transitionDuration: nonNegativeInteger,
 
   // i18n
   monthFormat: PropTypes.string,
@@ -70,7 +72,8 @@ const defaultProps = {
   onDayMouseLeave() {},
   onMonthTransitionEnd() {},
   renderMonth: null,
-  renderDay: null,
+  renderCalendarDay: undefined,
+  renderDayContents: null,
   transformValue: 'none',
   daySize: DAY_SIZE,
   focusedDate: null,
@@ -78,6 +81,7 @@ const defaultProps = {
   firstDayOfWeek: null,
   setCalendarMonthHeights() {},
   isRTL: false,
+  transitionDuration: 200,
 
   // i18n
   monthFormat: 'MMMM YYYY', // english locale
@@ -166,11 +170,17 @@ class CalendarMonthGrid extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    const { isAnimating, onMonthTransitionEnd, setCalendarMonthHeights } = this.props;
+    const {
+      isAnimating,
+      transitionDuration,
+      onMonthTransitionEnd,
+      setCalendarMonthHeights,
+    } = this.props;
 
     // For IE9, immediately call onMonthTransitionEnd instead of
-    // waiting for the animation to complete
-    if (!this.isTransitionEndSupported && isAnimating) {
+    // waiting for the animation to complete. Similarly, if transitionDuration
+    // is set to 0, also immediately invoke the onMonthTransitionEnd callback
+    if ((!this.isTransitionEndSupported || !transitionDuration) && isAnimating) {
       onMonthTransitionEnd();
     }
 
@@ -189,7 +199,8 @@ class CalendarMonthGrid extends React.Component {
   }
 
   onTransitionEnd() {
-    this.props.onMonthTransitionEnd();
+    const { onMonthTransitionEnd } = this.props;
+    onMonthTransitionEnd();
   }
 
   setContainerRef(ref) {
@@ -223,7 +234,8 @@ class CalendarMonthGrid extends React.Component {
       onDayMouseLeave,
       onDayClick,
       renderMonth,
-      renderDay,
+      renderCalendarDay,
+      renderDayContents,
       onMonthTransitionEnd,
       firstDayOfWeek,
       focusedDate,
@@ -232,6 +244,7 @@ class CalendarMonthGrid extends React.Component {
       styles,
       phrases,
       dayAriaLabelFormat,
+      transitionDuration,
     } = this.props;
 
     const { months } = this.state;
@@ -253,8 +266,8 @@ class CalendarMonthGrid extends React.Component {
           isVertical && styles.CalendarMonthGrid__vertical,
           isVerticalScrollable && styles.CalendarMonthGrid__vertical_scrollable,
           isAnimating && styles.CalendarMonthGrid__animating,
-          isAnimating && {
-            transition: 'transform 0.2s ease-in-out',
+          isAnimating && transitionDuration && {
+            transition: `transform ${transitionDuration}ms ease-in-out`,
           },
           {
             ...getTransformStyles(transformValue),
@@ -301,7 +314,8 @@ class CalendarMonthGrid extends React.Component {
                 onDayMouseLeave={onDayMouseLeave}
                 onDayClick={onDayClick}
                 renderMonth={renderMonth}
-                renderDay={renderDay}
+                renderCalendarDay={renderCalendarDay}
+                renderDayContents={renderDayContents}
                 firstDayOfWeek={firstDayOfWeek}
                 daySize={daySize}
                 focusedDate={isVisible ? focusedDate : null}

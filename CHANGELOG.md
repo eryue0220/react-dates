@@ -1,5 +1,34 @@
 # Change Log
 
+## 16.0.1
+- [fix] Add back missing onKeyDown method to `CalendarDay` ([#901](https://github.com/airbnb/react-dates/pull/901))
+
+## 16.0.0
+- [breaking] Simplify `CalendarDay` component ([#894](https://github.com/airbnb/react-dates/pull/894))
+- [breaking] rename `renderDay` prop to `renderDayContents` ([#894](https://github.com/airbnb/react-dates/pull/894))
+- [new] Add `renderCalendarDay` component to allow for easy one-off customization of `CalendarDay` ([#894](https://github.com/airbnb/react-dates/pull/894))
+
+## 15.5.2
+- revert [#866](https://github.com/airbnb/react-dates/pull/866); it turned out to be semver-major
+
+## 15.5.1
+- [fix] Adjust `small` variant height to be 36px ([#892](https://github.com/airbnb/react-dates/pull/892))
+
+## 15.5.0
+- [new] Add `small` variant ([#891](https://github.com/airbnb/react-dates/pull/891))
+
+## 15.4.0
+- [fix] Set font sizes according to theme variable ([#885](https://github.com/airbnb/react-dates/pull/885))
+- [new] Add `verticalSpacing` prop ([#883](https://github.com/airbnb/react-dates/pull/883))
+
+## 15.3.0
+- [new] Add `transitionDuration` prop ([#865](https://github.com/airbnb/react-dates/pull/865))
+- [fix] Remove default prop values for required startDateId and endDateId props ([#866](https://github.com/airbnb/react-dates/pull/866))
+- [new] Add `block` styling prop ([#871](https://github.com/airbnb/react-dates/pull/871))
+- [new] Add `noBorder` prop to `DayPicker` variations ([#869](https://github.com/airbnb/react-dates/pull/869))
+- [new] Add `noBorder` prop to inputs ([#870](https://github.com/airbnb/react-dates/pull/870))
+- [fix] Remove unused width style in `KeyboardShortcutsRow` ([#867](https://github.com/airbnb/react-dates/pull/867))
+
 ## 15.2.1
 - [fix] Republish `_datepicker.css`
 
@@ -119,7 +148,7 @@
 ## v11.1.0
 - [fix] Patch issues with vertical scrollable datepickers, after-hovered-start and month transitions ([#503](https://github.com/airbnb/react-dates/pull/503))
 - [new] Adds a `readOnly` prop on the DRP and SDP ([#501](https://github.com/airbnb/react-dates/pull/501))
-- [fix] Disable hover when `focusedInput` is falsey ([#483](https://github.com/airbnb/react-dates/pull/483))
+- [fix] Disable hover when `focusedInput` is falsy ([#483](https://github.com/airbnb/react-dates/pull/483))
 
 ## v11.0.1
 - [fix] Fixes small modifier issues in the DRP after rearchitecture ([#489](https://github.com/airbnb/react-dates/pull/489))

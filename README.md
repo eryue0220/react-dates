@@ -127,6 +127,7 @@ customInputIcon: PropTypes.node,
 customArrowIcon: PropTypes.node,
 customCloseIcon: PropTypes.node,
 noBorder: PropTypes.bool,
+block: PropTypes.bool,
 
 // calendar presentation and interaction related props
 renderMonth: PropTypes.func,
@@ -151,9 +152,11 @@ navNext: PropTypes.node,
 onPrevMonthClick: PropTypes.func,
 onNextMonthClick: PropTypes.func,
 onClose: PropTypes.func,
+transitionDuration: nonNegativeInteger, // milliseconds
 
 // day presentation and interaction related props
-renderDay: PropTypes.func,
+renderCalendarDay: PropTypes.func,
+renderDayContents: PropTypes.func,
 minimumNights: PropTypes.number,
 enableOutsideDays: PropTypes.bool,
 isDayBlocked: PropTypes.func,
@@ -198,6 +201,7 @@ customCloseIcon: PropTypes.node,
 showDefaultInputIcon: PropTypes.bool,
 customInputIcon: PropTypes.node,
 noBorder: PropTypes.bool,
+block: PropTypes.bool,
 
 // calendar presentation and interaction related props
 renderMonth: PropTypes.func,
@@ -222,9 +226,11 @@ navNext: PropTypes.node,
 onPrevMonthClick: PropTypes.func,
 onNextMonthClick: PropTypes.func,
 onClose: PropTypes.func,
+transitionDuration: nonNegativeInteger, // milliseconds
 
 // day presentation and interaction related props
-renderDay: PropTypes.func,
+renderCalendarDay: PropTypes.func,
+renderDayContents: PropTypes.func,
 enableOutsideDays: PropTypes.bool,
 isDayBlocked: PropTypes.func,
 isOutsideRange: PropTypes.func,
@@ -271,9 +277,11 @@ The following is a list of other *OPTIONAL* props you may provide to the `DayPic
   navNext: PropTypes.node,
   onPrevMonthClick: PropTypes.func,
   onNextMonthClick: PropTypes.func,
+  transitionDuration: nonNegativeInteger, // milliseconds
 
   // day presentation and interaction related props
-  renderDay: PropTypes.func,
+  renderCalendarDay: PropTypes.func,
+  renderDayContents: PropTypes.func,
   minimumNights: PropTypes.number,
   isOutsideRange: PropTypes.func,
   isDayBlocked: PropTypes.func,
