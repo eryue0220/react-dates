@@ -2,15 +2,18 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import shallowCompare from 'react-addons-shallow-compare';
 import momentPropTypes from 'react-moment-proptypes';
-import { forbidExtraProps, nonNegativeInteger } from 'airbnb-prop-types';
+import { forbidExtraProps, nonNegativeInteger, or } from 'airbnb-prop-types';
 import { css, withStyles, withStylesPropTypes } from 'react-with-styles';
 import moment from 'moment';
 
 import { CalendarDayPhrases } from '../defaultPhrases';
 import getPhrasePropTypes from '../utils/getPhrasePropTypes';
-import getPhrase from '../utils/getPhrase';
+import getCalendarDaySettings from '../utils/getCalendarDaySettings';
 
-import { BLOCKED_MODIFIER, DAY_SIZE } from '../constants';
+import { DAY_SIZE } from '../constants';
+import DefaultTheme from '../theme/DefaultTheme';
+
+const { reactDates: { color } } = DefaultTheme;
 
 function getStyles(stylesObj, isHovered) {
   if (!stylesObj) return null;
@@ -25,12 +28,12 @@ function getStyles(stylesObj, isHovered) {
 
 const DayStyleShape = PropTypes.shape({
   background: PropTypes.string,
-  border: PropTypes.string,
+  border: or([PropTypes.string, PropTypes.number]),
   color: PropTypes.string,
 
   hover: PropTypes.shape({
     background: PropTypes.string,
-    border: PropTypes.string,
+    border: or([PropTypes.string, PropTypes.number]),
     color: PropTypes.string,
   }),
 });
@@ -53,6 +56,8 @@ const propTypes = forbidExtraProps({
   defaultStyles: DayStyleShape,
   outsideStyles: DayStyleShape,
   todayStyles: DayStyleShape,
+  firstDayOfWeekStyles: DayStyleShape,
+  lastDayOfWeekStyles: DayStyleShape,
   highlightedCalendarStyles: DayStyleShape,
   blockedMinNightsStyles: DayStyleShape,
   blockedCalendarStyles: DayStyleShape,
@@ -60,14 +65,117 @@ const propTypes = forbidExtraProps({
   hoveredSpanStyles: DayStyleShape,
   selectedSpanStyles: DayStyleShape,
   lastInRangeStyles: DayStyleShape,
+  selectedStyles: DayStyleShape,
   selectedStartStyles: DayStyleShape,
   selectedEndStyles: DayStyleShape,
-  selectedStyles: DayStyleShape,
   afterHoveredStartStyles: DayStyleShape,
 
   // internationalization
   phrases: PropTypes.shape(getPhrasePropTypes(CalendarDayPhrases)),
 });
+
+export const defaultStyles = {
+  border: `1px solid ${color.core.borderLight}`,
+  color: color.text,
+  background: color.background,
+
+  hover: {
+    background: color.core.borderLight,
+    border: `1px double ${color.core.borderLight}`,
+    color: 'inherit',
+  },
+};
+
+export const outsideStyles = {
+  background: color.outside.backgroundColor,
+  border: 0,
+  color: color.outside.color,
+};
+
+export const highlightedCalendarStyles = {
+  background: color.highlighted.backgroundColor,
+  color: color.highlighted.color,
+
+  hover: {
+    background: color.highlighted.backgroundColor_hover,
+    color: color.highlighted.color_active,
+  },
+};
+
+export const blockedMinNightsStyles = {
+  background: color.minimumNights.backgroundColor,
+  border: `1px solid ${color.minimumNights.borderColor}`,
+  color: color.minimumNights.color,
+
+  hover: {
+    background: color.minimumNights.backgroundColor_hover,
+    color: color.minimumNights.color_active,
+  },
+};
+
+export const blockedCalendarStyles = {
+  background: color.blocked_calendar.backgroundColor,
+  border: `1px solid ${color.blocked_calendar.borderColor}`,
+  color: color.blocked_calendar.color,
+
+  hover: {
+    background: color.blocked_calendar.backgroundColor_hover,
+    border: `1px solid ${color.blocked_calendar.borderColor}`,
+    color: color.blocked_calendar.color_active,
+  },
+};
+
+export const blockedOutOfRangeStyles = {
+  background: color.blocked_out_of_range.backgroundColor,
+  border: `1px solid ${color.blocked_out_of_range.borderColor}`,
+  color: color.blocked_out_of_range.color,
+
+  hover: {
+    background: color.blocked_out_of_range.backgroundColor_hover,
+    border: `1px solid ${color.blocked_out_of_range.borderColor}`,
+    color: color.blocked_out_of_range.color_active,
+  },
+};
+
+export const hoveredSpanStyles = {
+  background: color.hoveredSpan.backgroundColor,
+  border: `1px solid ${color.hoveredSpan.borderColor}`,
+  color: color.hoveredSpan.color,
+
+  hover: {
+    background: color.hoveredSpan.backgroundColor_hover,
+    border: `1px solid ${color.hoveredSpan.borderColor}`,
+    color: color.hoveredSpan.color_active,
+  },
+};
+
+export const selectedSpanStyles = {
+  background: color.selectedSpan.backgroundColor,
+  border: `1px solid ${color.selectedSpan.borderColor}`,
+  color: color.selectedSpan.color,
+
+  hover: {
+    background: color.selectedSpan.backgroundColor_hover,
+    border: `1px solid ${color.selectedSpan.borderColor}`,
+    color: color.selectedSpan.color_active,
+  },
+};
+
+export const lastInRangeStyles = {
+  borderRight: color.core.primary,
+};
+
+export const selectedStyles = {
+  background: color.selected.backgroundColor,
+  border: `1px solid ${color.selected.borderColor}`,
+  color: color.selected.color,
+
+  hover: {
+    background: color.selected.backgroundColor_hover,
+    border: `1px solid ${color.selected.borderColor}`,
+    color: color.selected.color_active,
+  },
+};
 
 const defaultProps = {
   day: moment(),
@@ -81,6 +189,24 @@ const defaultProps = {
   onDayMouseLeave() {},
   renderDayContents: null,
   ariaLabelFormat: 'dddd, LL',
+
+  // style defaults
+  defaultStyles,
+  outsideStyles,
+  todayStyles: {},
+  highlightedCalendarStyles,
+  blockedMinNightsStyles,
+  blockedCalendarStyles,
+  blockedOutOfRangeStyles,
+  hoveredSpanStyles,
+  selectedSpanStyles,
+  lastInRangeStyles,
+  selectedStyles,
+  selectedStartStyles: {},
+  selectedEndStyles: {},
+  afterHoveredStartStyles: {},
+  firstDayOfWeekStyles: {},
+  lastDayOfWeekStyles: {},
 
   // internationalization
   phrases: CalendarDayPhrases,
@@ -152,14 +278,13 @@ class CustomizableCalendarDay extends React.Component {
       tabIndex,
       renderDayContents,
       styles,
-      phrases: {
-        chooseAvailableDate,
-        dateIsUnavailable,
-      },
+      phrases,
 
       defaultStyles: defaultStylesWithHover,
       outsideStyles: outsideStylesWithHover,
       todayStyles: todayStylesWithHover,
+      firstDayOfWeekStyles: firstDayOfWeekStylesWithHover,
+      lastDayOfWeekStyles: lastDayOfWeekStylesWithHover,
       highlightedCalendarStyles: highlightedCalendarStylesWithHover,
       blockedMinNightsStyles: blockedMinNightsStylesWithHover,
       blockedCalendarStyles: blockedCalendarStylesWithHover,
@@ -167,9 +292,9 @@ class CustomizableCalendarDay extends React.Component {
       hoveredSpanStyles: hoveredSpanStylesWithHover,
       selectedSpanStyles: selectedSpanStylesWithHover,
       lastInRangeStyles: lastInRangeStylesWithHover,
+      selectedStyles: selectedStylesWithHover,
       selectedStartStyles: selectedStartStylesWithHover,
       selectedEndStyles: selectedEndStylesWithHover,
-      selectedStyles: selectedStylesWithHover,
       afterHoveredStartStyles: afterHoveredStartStylesWithHover,
     } = this.props;
 
@@ -177,70 +302,14 @@ class CustomizableCalendarDay extends React.Component {
 
     if (!day) return <td />;
 
-    const formattedDate = { date: day.format(ariaLabelFormat) };
-
-    const ariaLabel = modifiers.has(BLOCKED_MODIFIER)
-      ? getPhrase(dateIsUnavailable, formattedDate)
-      : getPhrase(chooseAvailableDate, formattedDate);
-
-    const daySizeStyles = {
-      width: daySize,
-      height: daySize - 1,
-    };
-
-    const useDefaultCursor = (
-      modifiers.has('blocked-minimum-nights')
-      || modifiers.has('blocked-calendar')
-      || modifiers.has('blocked-out-of-range')
-    );
-
-    const selected = (
-      modifiers.has('selected')
-      || modifiers.has('selected-start')
-      || modifiers.has('selected-end')
-    );
-
-    const hoveredSpan = !selected && (
-      modifiers.has('hovered-span')
-      || modifiers.has('after-hovered-start')
-    );
-
-    const isOutsideRange = modifiers.has('blocked-out-of-range');
-
-    const defaultStyles = getStyles(defaultStylesWithHover, isHovered);
-    const outsideStyles = getStyles(outsideStylesWithHover, isHovered);
-    const todayStyles = getStyles(todayStylesWithHover, isHovered);
-    const highlightedCalendarStyles = getStyles(highlightedCalendarStylesWithHover, isHovered);
-    const blockedMinNightsStyles = getStyles(blockedMinNightsStylesWithHover, isHovered);
-    const blockedCalendarStyles = getStyles(blockedCalendarStylesWithHover, isHovered);
-    const blockedOutOfRangeStyles = getStyles(blockedOutOfRangeStylesWithHover, isHovered);
-    const hoveredSpanStyles = getStyles(hoveredSpanStylesWithHover, isHovered);
-    const selectedSpanStyles = getStyles(selectedSpanStylesWithHover, isHovered);
-    const lastInRangeStyles = getStyles(lastInRangeStylesWithHover, isHovered);
-    const selectedStartStyles = getStyles(selectedStartStylesWithHover, isHovered);
-    const selectedEndStyles = getStyles(selectedEndStylesWithHover, isHovered);
-    const selectedStyles = getStyles(selectedStylesWithHover, isHovered);
-    const afterHoveredStartStyles = getStyles(afterHoveredStartStylesWithHover, isHovered);
-
-    const hasCustomSelectedStyles =
-      defaultStyles ||
-      (selected && selectedStyles) ||
-      (modifiers.has('selected-start') && selectedStartStyles) ||
-      (modifiers.has('selected-end') && selectedEndStyles);
-    const hasCustomHoveredStyles =
-      (modifiers.has('hovered-span') && hoveredSpanStyles) ||
-      (modifiers.has('after-hovered-start') && afterHoveredStartStyles);
-    const hasCustomStyles =
-      (isOutsideDay && outsideStyles) ||
-      (modifiers.has('today') && todayStyles) ||
-      (modifiers.has('highlighted-calendar') && highlightedCalendarStyles) ||
-      (modifiers.has('blocked-minimum-nights') && blockedMinNightsStyles) ||
-      (modifiers.has('blocked-calendar') && blockedCalendarStyles) ||
-      (modifiers.has('last-in-range') && lastInRangeStyles) ||
-      (modifiers.has('selected-span') && selectedSpanStyles) ||
-      (isOutsideRange && blockedOutOfRangeStyles) ||
-      hasCustomSelectedStyles ||
-      hasCustomHoveredStyles;
+    const {
+      daySizeStyles,
+      useDefaultCursor,
+      selected,
+      hoveredSpan,
+      isOutsideRange,
+      ariaLabel,
+    } = getCalendarDaySettings(day, ariaLabelFormat, daySize, modifiers, phrases);
 
     return (
       <td
@@ -248,37 +317,22 @@ class CustomizableCalendarDay extends React.Component {
           styles.CalendarDay,
           useDefaultCursor && styles.CalendarDay__defaultCursor,
           daySizeStyles,
-          ...hasCustomStyles && [
-            defaultStyles,
-            isOutsideDay && outsideStyles,
-            modifiers.has('today') && todayStyles,
-            modifiers.has('highlighted-calendar') && highlightedCalendarStyles,
-            modifiers.has('blocked-minimum-nights') && blockedMinNightsStyles,
-            modifiers.has('blocked-calendar') && blockedCalendarStyles,
-            hoveredSpan && hoveredSpanStyles,
-            modifiers.has('after-hovered-start') && afterHoveredStartStyles,
-            modifiers.has('selected-span') && selectedSpanStyles,
-            modifiers.has('last-in-range') && lastInRangeStyles,
-            modifiers.has('selected-start') && selectedStartStyles,
-            modifiers.has('selected-end') && selectedEndStyles,
-            selected && selectedStyles,
-            isOutsideRange && blockedOutOfRangeStyles,
-          ],
-
-          ...!hasCustomStyles && [
-            styles.CalendarDay__default,
-            isOutsideDay && styles.CalendarDay__outside,
-            modifiers.has('today') && styles.CalendarDay__today,
-            modifiers.has('highlighted-calendar') && styles.CalendarDay__highlighted_calendar,
-            modifiers.has('blocked-minimum-nights') && styles.CalendarDay__blocked_minimum_nights,
-            modifiers.has('blocked-calendar') && styles.CalendarDay__blocked_calendar,
-            hoveredSpan && styles.CalendarDay__hovered_span,
-            modifiers.has('selected-span') && styles.CalendarDay__selected_span,
-            modifiers.has('last-in-range') && styles.CalendarDay__last_in_range,
-            modifiers.has('selected-start') && styles.CalendarDay__selected_start,
-            modifiers.has('selected-end') && styles.CalendarDay__selected_end,
-            isOutsideRange && (blockedOutOfRangeStyles || styles.CalendarDay__blocked_out_of_range),
-          ],
+          getStyles(defaultStylesWithHover, isHovered),
+          isOutsideDay && getStyles(outsideStylesWithHover, isHovered),
+          modifiers.has('today') && getStyles(todayStylesWithHover, isHovered),
+          modifiers.has('first-day-of-week') && getStyles(firstDayOfWeekStylesWithHover, isHovered),
+          modifiers.has('last-day-of-week') && getStyles(lastDayOfWeekStylesWithHover, isHovered),
+          modifiers.has('highlighted-calendar') && getStyles(highlightedCalendarStylesWithHover, isHovered),
+          modifiers.has('blocked-minimum-nights') && getStyles(blockedMinNightsStylesWithHover, isHovered),
+          modifiers.has('blocked-calendar') && getStyles(blockedCalendarStylesWithHover, isHovered),
+          hoveredSpan && getStyles(hoveredSpanStylesWithHover, isHovered),
+          modifiers.has('after-hovered-start') && getStyles(afterHoveredStartStylesWithHover, isHovered),
+          modifiers.has('selected-span') && getStyles(selectedSpanStylesWithHover, isHovered),
+          modifiers.has('last-in-range') && getStyles(lastInRangeStylesWithHover, isHovered),
+          selected && getStyles(selectedStylesWithHover, isHovered),
+          modifiers.has('selected-start') && getStyles(selectedStartStylesWithHover, isHovered),
+          modifiers.has('selected-end') && getStyles(selectedEndStylesWithHover, isHovered),
+          isOutsideRange && getStyles(blockedOutOfRangeStylesWithHover, isHovered),
         )}
         role="button" // eslint-disable-line jsx-a11y/no-noninteractive-element-to-interactive-role
         ref={this.setButtonRef}
@@ -300,7 +354,7 @@ CustomizableCalendarDay.propTypes = propTypes;
 CustomizableCalendarDay.defaultProps = defaultProps;
 
 export { CustomizableCalendarDay as PureCustomizableCalendarDay };
-export default withStyles(({ reactDates: { color, font } }) => ({
+export default withStyles(({ reactDates: { font } }) => ({
   CalendarDay: {
     boxSizing: 'border-box',
     cursor: 'pointer',
@@ -315,152 +369,4 @@ export default withStyles(({ reactDates: { color, font } }) => ({
   CalendarDay__defaultCursor: {
     cursor: 'default',
   },
-
-  CalendarDay__default: {
-    border: `1px solid ${color.core.borderLight}`,
-    color: color.text,
-    background: color.background,
-
-    ':hover': {
-      background: color.core.borderLight,
-      border: `1px double ${color.core.borderLight}`,
-      color: 'inherit',
-    },
-  },
-
-  CalendarDay__outside: {
-    border: 0,
-
-    background: color.outside.backgroundColor,
-    color: color.outside.color,
-  },
-
-  CalendarDay__blocked_minimum_nights: {
-    background: color.minimumNights.backgroundColor,
-    border: `1px solid ${color.minimumNights.borderColor}`,
-    color: color.minimumNights.color,
-
-    ':hover': {
-      background: color.minimumNights.backgroundColor_hover,
-      color: color.minimumNights.color_active,
-    },
-
-    ':active': {
-      background: color.minimumNights.backgroundColor_active,
-      color: color.minimumNights.color_active,
-    },
-  },
-
-  CalendarDay__highlighted_calendar: {
-    background: color.highlighted.backgroundColor,
-    color: color.highlighted.color,
-
-    ':hover': {
-      background: color.highlighted.backgroundColor_hover,
-      color: color.highlighted.color_active,
-    },
-
-    ':active': {
-      background: color.highlighted.backgroundColor_active,
-      color: color.highlighted.color_active,
-    },
-  },
-
-  CalendarDay__selected_span: {
-    background: color.selectedSpan.backgroundColor,
-    border: `1px solid ${color.selectedSpan.borderColor}`,
-    color: color.selectedSpan.color,
-
-    ':hover': {
-      background: color.selectedSpan.backgroundColor_hover,
-      border: `1px solid ${color.selectedSpan.borderColor}`,
-      color: color.selectedSpan.color_active,
-    },
-
-    ':active': {
-      background: color.selectedSpan.backgroundColor_active,
-      border: `1px solid ${color.selectedSpan.borderColor}`,
-      color: color.selectedSpan.color_active,
-    },
-  },
-
-  CalendarDay__last_in_range: {
-    borderRight: color.core.primary,
-  },
-
-  CalendarDay__selected: {
-    background: color.selected.backgroundColor,
-    border: `1px solid ${color.selected.borderColor}`,
-    color: color.selected.color,
-
-    ':hover': {
-      background: color.selected.backgroundColor_hover,
-      border: `1px solid ${color.selected.borderColor}`,
-      color: color.selected.color_active,
-    },
-
-    ':active': {
-      background: color.selected.backgroundColor_active,
-      border: `1px solid ${color.selected.borderColor}`,
-      color: color.selected.color_active,
-    },
-  },
-
-  CalendarDay__hovered_span: {
-    background: color.hoveredSpan.backgroundColor,
-    border: `1px solid ${color.hoveredSpan.borderColor}`,
-    color: color.hoveredSpan.color,
-
-    ':hover': {
-      background: color.hoveredSpan.backgroundColor_hover,
-      border: `1px solid ${color.hoveredSpan.borderColor}`,
-      color: color.hoveredSpan.color_active,
-    },
-
-    ':active': {
-      background: color.hoveredSpan.backgroundColor_active,
-      border: `1px solid ${color.hoveredSpan.borderColor}`,
-      color: color.hoveredSpan.color_active,
-    },
-  },
-
-  CalendarDay__blocked_calendar: {
-    background: color.blocked_calendar.backgroundColor,
-    border: `1px solid ${color.blocked_calendar.borderColor}`,
-    color: color.blocked_calendar.color,
-
-    ':hover': {
-      background: color.blocked_calendar.backgroundColor_hover,
-      border: `1px solid ${color.blocked_calendar.borderColor}`,
-      color: color.blocked_calendar.color_active,
-    },
-
-    ':active': {
-      background: color.blocked_calendar.backgroundColor_active,
-      border: `1px solid ${color.blocked_calendar.borderColor}`,
-      color: color.blocked_calendar.color_active,
-    },
-  },
-
-  CalendarDay__blocked_out_of_range: {
-    background: color.blocked_out_of_range.backgroundColor,
-    border: `1px solid ${color.blocked_out_of_range.borderColor}`,
-    color: color.blocked_out_of_range.color,
-
-    ':hover': {
-      background: color.blocked_out_of_range.backgroundColor_hover,
-      border: `1px solid ${color.blocked_out_of_range.borderColor}`,
-      color: color.blocked_out_of_range.color_active,
-    },
-
-    ':active': {
-      background: color.blocked_out_of_range.backgroundColor_active,
-      border: `1px solid ${color.blocked_out_of_range.borderColor}`,
-      color: color.blocked_out_of_range.color_active,
-    },
-  },
-
-  CalendarDay__selected_start: {},
-  CalendarDay__selected_end: {},
-  CalendarDay__today: {},
 }))(CustomizableCalendarDay);

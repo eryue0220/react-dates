@@ -1338,6 +1338,28 @@ describe('DayPickerRangeController', () => {
           })).to.equal(true);
         });
       });
+
+      describe('minimumNights is 0', () => {
+        it(
+          'calls props.onDatesChange with startDate === today and endDate === today',
+          () => {
+            const onDatesChangeStub = sinon.stub();
+            const wrapper = shallow((
+              <DayPickerRangeController
+                focusedInput={START_DATE}
+                minimumNights={0}
+                onDatesChange={onDatesChangeStub}
+                endDate={today}
+              />
+            ));
+            wrapper.instance().onDayClick(today);
+            expect(onDatesChangeStub.calledWith({
+              startDate: today,
+              endDate: today,
+            })).to.equal(true);
+          },
+        );
+      });
     });
 
     describe('props.focusedInput === END_DATE', () => {
@@ -1476,6 +1498,54 @@ describe('DayPickerRangeController', () => {
         );
       });
     });
+
+    describe('props.startDateOffset / props.endDateOffset', () => {
+      it('calls props.onDatesChange with startDate === startDateOffset(date) and endDate === endDateOffset(date)', () => {
+        const clickDate = moment(today).clone().add(2, 'days');
+        const onDatesChangeStub = sinon.stub();
+        const wrapper = shallow((
+          <DayPickerRangeController
+            onDatesChange={onDatesChangeStub}
+            startDateOffset={day => day.subtract(2, 'days')}
+            endDateOffset={day => day.add(4, 'days')}
+          />
+        ));
+        wrapper.instance().onDayClick(clickDate);
+        const args = onDatesChangeStub.getCall(0).args[0];
+        expect(args.startDate.format()).to.equal(clickDate.clone().subtract(2, 'days').format());
+        expect(args.endDate.format()).to.equal(clickDate.clone().add(4, 'days').format());
+      });
+
+      it('calls props.onDatesChange with startDate === startDateOffset(date) and endDate === selectedDate when endDateOffset not provided', () => {
+        const clickDate = moment(today).clone().add(2, 'days');
+        const onDatesChangeStub = sinon.stub();
+        const wrapper = shallow((
+          <DayPickerRangeController
+            onDatesChange={onDatesChangeStub}
+            startDateOffset={day => day.subtract(5, 'days')}
+          />
+        ));
+        wrapper.instance().onDayClick(clickDate);
+        const args = onDatesChangeStub.getCall(0).args[0];
+        expect(args.startDate.format()).to.equal(clickDate.clone().subtract(5, 'days').format());
+        expect(args.endDate.format()).to.equal(clickDate.format());
+      });
+
+      it('calls props.onDatesChange with startDate === selectedDate and endDate === endDateOffset(date) when startDateOffset not provided', () => {
+        const clickDate = moment(today).clone().add(12, 'days');
+        const onDatesChangeStub = sinon.stub();
+        const wrapper = shallow((
+          <DayPickerRangeController
+            onDatesChange={onDatesChangeStub}
+            endDateOffset={day => day.add(12, 'days')}
+          />
+        ));
+        wrapper.instance().onDayClick(clickDate);
+        const args = onDatesChangeStub.getCall(0).args[0];
+        expect(args.startDate.format()).to.equal(clickDate.format());
+        expect(args.endDate.format()).to.equal(clickDate.clone().add(12, 'days').format());
+      });
+    });
   });
 
   describe('#onDayMouseEnter', () => {
@@ -1483,6 +1553,18 @@ describe('DayPickerRangeController', () => {
       const wrapper = shallow(<DayPickerRangeController focusedInput={START_DATE} />);
       wrapper.instance().onDayMouseEnter(today);
       expect(wrapper.state().hoverDate).to.equal(today);
+    });
+
+    it('sets state.dateOffset to the start and end date range when range included', () => {
+      const wrapper = shallow((
+        <DayPickerRangeController
+          focusedInput={START_DATE}
+          endDateOffset={day => day.add(2, 'days')}
+        />
+      ));
+      wrapper.instance().onDayMouseEnter(today);
+      expect(wrapper.state().dateOffset.start.format()).to.equal(today.format());
+      expect(wrapper.state().dateOffset.end.format()).to.equal(today.clone().add(3, 'days').format());
     });
 
     describe('modifiers', () => {
@@ -2159,6 +2241,8 @@ describe('DayPickerRangeController', () => {
       sinon.stub(DayPickerRangeController.prototype, 'isHovered').returns(false);
       sinon.stub(DayPickerRangeController.prototype, 'isInHoveredSpan').returns(false);
       sinon.stub(DayPickerRangeController.prototype, 'isDayAfterHoveredStartDate').returns(false);
+      sinon.stub(DayPickerRangeController.prototype, 'isFirstDayOfWeek').returns(false);
+      sinon.stub(DayPickerRangeController.prototype, 'isLastDayOfWeek').returns(false);
       const wrapper = shallow((
         <DayPickerRangeController
           onDatesChange={sinon.stub()}
@@ -3062,6 +3146,42 @@ describe('DayPickerRangeController', () => {
       it('returns false if last month', () => {
         const wrapper = shallow(<DayPickerRangeController />);
         expect(wrapper.instance().isToday(moment(today).subtract(1, 'months'))).to.equal(false);
+      });
+    });
+
+    describe('#isFirstDayOfWeek', () => {
+      it('returns true if first day of this week', () => {
+        const wrapper = shallow(<DayPickerRangeController />);
+        expect(wrapper.instance().isFirstDayOfWeek(moment().startOf('week'))).to.equal(true);
+      });
+
+      it('returns true if same day as firstDayOfWeek prop', () => {
+        const firstDayOfWeek = 3;
+        const wrapper = shallow(<DayPickerRangeController firstDayOfWeek={firstDayOfWeek} />);
+        expect(wrapper.instance().isFirstDayOfWeek(moment().startOf('week').day(firstDayOfWeek))).to.equal(true);
+      });
+
+      it('returns false if not the first day of the week', () => {
+        const wrapper = shallow(<DayPickerRangeController />);
+        expect(wrapper.instance().isFirstDayOfWeek(moment().endOf('week'))).to.equal(false);
+      });
+    });
+
+    describe('#isLastDayOfWeek', () => {
+      it('returns true if last day of week', () => {
+        const wrapper = shallow(<DayPickerRangeController />);
+        expect(wrapper.instance().isLastDayOfWeek(moment().endOf('week'))).to.equal(true);
+      });
+
+      it('returns true if 6 days after firstDayOfWeek prop', () => {
+        const firstDayOfWeek = 3;
+        const wrapper = shallow(<DayPickerRangeController firstDayOfWeek={firstDayOfWeek} />);
+        expect(wrapper.instance().isLastDayOfWeek(moment().day(firstDayOfWeek).add(6, 'days'))).to.equal(true);
+      });
+
+      it('returns false if not last of week', () => {
+        const wrapper = shallow(<DayPickerRangeController />);
+        expect(wrapper.instance().isLastDayOfWeek(moment().startOf('week').add(1, 'day'))).to.equal(false);
       });
     });
   });

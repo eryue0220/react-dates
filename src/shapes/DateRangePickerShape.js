@@ -8,9 +8,11 @@ import getPhrasePropTypes from '../utils/getPhrasePropTypes';
 import FocusedInputShape from '../shapes/FocusedInputShape';
 import IconPositionShape from '../shapes/IconPositionShape';
 import OrientationShape from '../shapes/OrientationShape';
+import DisabledShape from '../shapes/DisabledShape';
 import anchorDirectionShape from '../shapes/AnchorDirectionShape';
 import openDirectionShape from '../shapes/OpenDirectionShape';
 import DayOfWeekShape from '../shapes/DayOfWeekShape';
+import CalendarInfoPositionShape from '../shapes/CalendarInfoPositionShape';
 
 export default {
   // required props for a functional interactive DateRangePicker
@@ -28,7 +30,7 @@ export default {
   startDatePlaceholderText: PropTypes.string,
   endDateId: PropTypes.string.isRequired,
   endDatePlaceholderText: PropTypes.string,
-  disabled: PropTypes.bool,
+  disabled: DisabledShape,
   required: PropTypes.bool,
   readOnly: PropTypes.bool,
   screenReaderInputMessage: PropTypes.string,
@@ -41,6 +43,8 @@ export default {
   noBorder: PropTypes.bool,
   block: PropTypes.bool,
   small: PropTypes.bool,
+  regular: PropTypes.bool,
+  keepFocusOnInput: PropTypes.bool,
 
   // calendar presentation and interaction related props
   renderMonth: PropTypes.func,
@@ -58,6 +62,7 @@ export default {
   keepOpenOnDateSelect: PropTypes.bool,
   reopenPickerOnClearDates: PropTypes.bool,
   renderCalendarInfo: PropTypes.func,
+  calendarInfoPosition: CalendarInfoPositionShape,
   hideKeyboardShortcutsPanel: PropTypes.bool,
   verticalHeight: nonNegativeInteger,
   transitionDuration: nonNegativeInteger,
@@ -83,4 +88,5 @@ export default {
   monthFormat: PropTypes.string,
   weekDayFormat: PropTypes.string,
   phrases: PropTypes.shape(getPhrasePropTypes(DateRangePickerPhrases)),
+  dayAriaLabelFormat: PropTypes.string,
 };

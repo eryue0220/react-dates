@@ -8,9 +8,9 @@ import moment from 'moment';
 
 import { CalendarDayPhrases } from '../defaultPhrases';
 import getPhrasePropTypes from '../utils/getPhrasePropTypes';
-import getPhrase from '../utils/getPhrase';
+import getCalendarDaySettings from '../utils/getCalendarDaySettings';
 
-import { BLOCKED_MODIFIER, DAY_SIZE } from '../constants';
+import { DAY_SIZE } from '../constants';
 
 const propTypes = forbidExtraProps({
   ...withStylesPropTypes,
@@ -107,43 +107,19 @@ class CalendarDay extends React.Component {
       renderDayContents,
       tabIndex,
       styles,
-      phrases: {
-        chooseAvailableDate,
-        dateIsUnavailable,
-      },
+      phrases,
     } = this.props;
 
     if (!day) return <td />;
 
-    const formattedDate = { date: day.format(ariaLabelFormat) };
-
-    const ariaLabel = modifiers.has(BLOCKED_MODIFIER)
-      ? getPhrase(dateIsUnavailable, formattedDate)
-      : getPhrase(chooseAvailableDate, formattedDate);
-
-    const daySizeStyles = {
-      width: daySize,
-      height: daySize - 1,
-    };
-
-    const useDefaultCursor = (
-      modifiers.has('blocked-minimum-nights')
-      || modifiers.has('blocked-calendar')
-      || modifiers.has('blocked-out-of-range')
-    );
-
-    const selected = (
-      modifiers.has('selected')
-      || modifiers.has('selected-start')
-      || modifiers.has('selected-end')
-    );
-
-    const hoveredSpan = !selected && (
-      modifiers.has('hovered-span')
-      || modifiers.has('after-hovered-start')
-    );
-
-    const isOutsideRange = modifiers.has('blocked-out-of-range');
+    const {
+      daySizeStyles,
+      useDefaultCursor,
+      selected,
+      hoveredSpan,
+      isOutsideRange,
+      ariaLabel,
+    } = getCalendarDaySettings(day, ariaLabelFormat, daySize, modifiers, phrases);
 
     return (
       <td
@@ -153,6 +129,9 @@ class CalendarDay extends React.Component {
           styles.CalendarDay__default,
           isOutsideDay && styles.CalendarDay__outside,
           modifiers.has('today') && styles.CalendarDay__today,
+          modifiers.has('first-day-of-week') && styles.CalendarDay__firstDayOfWeek,
+          modifiers.has('last-day-of-week') && styles.CalendarDay__lastDayOfWeek,
+          modifiers.has('hovered-offset') && styles.CalendarDay__hovered_offset,
           modifiers.has('highlighted-calendar') && styles.CalendarDay__highlighted_calendar,
           modifiers.has('blocked-minimum-nights') && styles.CalendarDay__blocked_minimum_nights,
           modifiers.has('blocked-calendar') && styles.CalendarDay__blocked_calendar,
@@ -211,6 +190,12 @@ export default withStyles(({ reactDates: { color, font } }) => ({
       border: `1px double ${color.core.borderLight}`,
       color: 'inherit',
     },
+  },
+
+  CalendarDay__hovered_offset: {
+    background: color.core.borderBright,
+    border: `1px double ${color.core.borderLight}`,
+    color: 'inherit',
   },
 
   CalendarDay__outside: {
@@ -348,4 +333,6 @@ export default withStyles(({ reactDates: { color, font } }) => ({
   CalendarDay__selected_start: {},
   CalendarDay__selected_end: {},
   CalendarDay__today: {},
+  CalendarDay__firstDayOfWeek: {},
+  CalendarDay__lastDayOfWeek: {},
 }))(CalendarDay);

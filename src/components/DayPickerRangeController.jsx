@@ -18,12 +18,16 @@ import isBeforeDay from '../utils/isBeforeDay';
 import getVisibleDays from '../utils/getVisibleDays';
 import isDayVisible from '../utils/isDayVisible';
 
+import getSelectedDateOffset from '../utils/getSelectedDateOffset';
+
 import toISODateString from '../utils/toISODateString';
 import toISOMonthString from '../utils/toISOMonthString';
 
+import DisabledShape from '../shapes/DisabledShape';
 import FocusedInputShape from '../shapes/FocusedInputShape';
 import ScrollableOrientationShape from '../shapes/ScrollableOrientationShape';
 import DayOfWeekShape from '../shapes/DayOfWeekShape';
+import CalendarInfoPositionShape from '../shapes/CalendarInfoPositionShape';
 
 import {
   START_DATE,
@@ -31,6 +35,7 @@ import {
   HORIZONTAL_ORIENTATION,
   VERTICAL_SCROLLABLE,
   DAY_SIZE,
+  INFO_POSITION_BOTTOM,
 } from '../constants';
 
 import DayPicker from './DayPicker';
@@ -39,6 +44,8 @@ const propTypes = forbidExtraProps({
   startDate: momentPropTypes.momentObj,
   endDate: momentPropTypes.momentObj,
   onDatesChange: PropTypes.func,
+  startDateOffset: PropTypes.func,
+  endDateOffset: PropTypes.func,
 
   focusedInput: FocusedInputShape,
   onFocusChange: PropTypes.func,
@@ -46,6 +53,7 @@ const propTypes = forbidExtraProps({
 
   keepOpenOnDateSelect: PropTypes.bool,
   minimumNights: PropTypes.number,
+  disabled: DisabledShape,
   isOutsideRange: PropTypes.func,
   isDayBlocked: PropTypes.func,
   isDayHighlighted: PropTypes.func,
@@ -70,6 +78,7 @@ const propTypes = forbidExtraProps({
   renderCalendarDay: PropTypes.func,
   renderDayContents: PropTypes.func,
   renderCalendarInfo: PropTypes.func,
+  calendarInfoPosition: CalendarInfoPositionShape,
   firstDayOfWeek: DayOfWeekShape,
   verticalHeight: nonNegativeInteger,
   transitionDuration: nonNegativeInteger,
@@ -92,6 +101,8 @@ const defaultProps = {
   startDate: undefined, // TODO: use null
   endDate: undefined, // TODO: use null
   onDatesChange() {},
+  startDateOffset: undefined,
+  endDateOffset: undefined,
 
   focusedInput: null,
   onFocusChange() {},
@@ -99,6 +110,7 @@ const defaultProps = {
 
   keepOpenOnDateSelect: false,
   minimumNights: 1,
+  disabled: false,
   isOutsideRange() {},
   isDayBlocked() {},
   isDayHighlighted() {},
@@ -123,6 +135,7 @@ const defaultProps = {
   renderCalendarDay: undefined,
   renderDayContents: null,
   renderCalendarInfo: null,
+  calendarInfoPosition: INFO_POSITION_BOTTOM,
   firstDayOfWeek: null,
   verticalHeight: null,
   noBorder: false,
@@ -137,6 +150,7 @@ const defaultProps = {
   monthFormat: 'MMMM YYYY',
   weekDayFormat: 'dd',
   phrases: DayPickerPhrases,
+  dayAriaLabelFormat: undefined,
 
   isRTL: false,
 };
@@ -170,7 +184,10 @@ export default class DayPickerRangeController extends React.Component {
       'last-in-range': day => this.isLastInRange(day),
       hovered: day => this.isHovered(day),
       'hovered-span': day => this.isInHoveredSpan(day),
+      'hovered-offset': day => this.isInHoveredSpan(day),
       'after-hovered-start': day => this.isDayAfterHoveredStartDate(day),
+      'first-day-of-week': day => this.isFirstDayOfWeek(day),
+      'last-day-of-week': day => this.isLastDayOfWeek(day),
     };
 
     const { currentMonth, visibleDays } = this.getStateForNewMonth(props);
@@ -423,6 +440,9 @@ export default class DayPickerRangeController extends React.Component {
       onFocusChange,
       onClose,
       onDatesChange,
+      startDateOffset,
+      endDateOffset,
+      disabled,
     } = this.props;
 
     if (e) e.preventDefault();
@@ -430,13 +450,32 @@ export default class DayPickerRangeController extends React.Component {
 
     let { startDate, endDate } = this.props;
 
-    if (focusedInput === START_DATE) {
-      onFocusChange(END_DATE);
+    if (startDateOffset || endDateOffset) {
+      startDate = getSelectedDateOffset(startDateOffset, day);
+      endDate = getSelectedDateOffset(endDateOffset, day);
 
-      startDate = day;
+      if (!keepOpenOnDateSelect) {
+        onFocusChange(null);
+        onClose({ startDate, endDate });
+      }
+    } else if (focusedInput === START_DATE) {
+      const lastAllowedStartDate = endDate && endDate.clone().subtract(minimumNights, 'days');
+      const isStartDateAfterEndDate = isBeforeDay(lastAllowedStartDate, day) ||
+        isAfterDay(startDate, endDate);
+      const isEndDateDisabled = disabled === END_DATE;
 
-      if (isInclusivelyAfterDay(day, endDate)) {
-        endDate = null;
+      if (!isEndDateDisabled || !isStartDateAfterEndDate) {
+        startDate = day;
+        if (isStartDateAfterEndDate) {
+          endDate = null;
+        }
+      }
+
+      if (isEndDateDisabled && !isStartDateAfterEndDate) {
+        onFocusChange(null);
+        onClose({ startDate, endDate });
+      } else if (!isEndDateDisabled) {
+        onFocusChange(END_DATE);
       }
     } else if (focusedInput === END_DATE) {
       const firstAllowedEndDate = startDate && startDate.clone().add(minimumNights, 'days');
@@ -450,7 +489,7 @@ export default class DayPickerRangeController extends React.Component {
           onFocusChange(null);
           onClose({ startDate, endDate });
         }
-      } else {
+      } else if (disabled !== START_DATE) {
         startDate = day;
         endDate = null;
       }
@@ -467,51 +506,78 @@ export default class DayPickerRangeController extends React.Component {
       endDate,
       focusedInput,
       minimumNights,
+      startDateOffset,
+      endDateOffset,
     } = this.props;
     const { hoverDate, visibleDays } = this.state;
+    let dateOffset = null;
 
     if (focusedInput) {
+      const hasOffset = startDateOffset || endDateOffset;
       let modifiers = {};
-      modifiers = this.deleteModifier(modifiers, hoverDate, 'hovered');
-      modifiers = this.addModifier(modifiers, day, 'hovered');
 
-      if (startDate && !endDate && focusedInput === END_DATE) {
-        if (isAfterDay(hoverDate, startDate)) {
-          const endSpan = hoverDate.clone().add(1, 'day');
-          modifiers = this.deleteModifierFromRange(modifiers, startDate, endSpan, 'hovered-span');
-        }
+      if (hasOffset) {
+        const start = getSelectedDateOffset(startDateOffset, day);
+        const end = getSelectedDateOffset(endDateOffset, day, rangeDay => rangeDay.add(1, 'day'));
 
-        if (!this.isBlocked(day) && isAfterDay(day, startDate)) {
-          const endSpan = day.clone().add(1, 'day');
-          modifiers = this.addModifierToRange(modifiers, startDate, endSpan, 'hovered-span');
+        dateOffset = {
+          start,
+          end,
+        };
+
+        if (this.state.dateOffset && this.state.dateOffset.start && this.state.dateOffset.end) {
+          modifiers = this.deleteModifierFromRange(modifiers, this.state.dateOffset.start, this.state.dateOffset.end, 'hovered-offset');
         }
+        modifiers = this.addModifierToRange(modifiers, start, end, 'hovered-offset');
       }
 
-      if (!startDate && endDate && focusedInput === START_DATE) {
-        if (isBeforeDay(hoverDate, endDate)) {
-          modifiers = this.deleteModifierFromRange(modifiers, hoverDate, endDate, 'hovered-span');
+      if (!hasOffset) {
+        modifiers = this.deleteModifier(modifiers, hoverDate, 'hovered');
+        modifiers = this.addModifier(modifiers, day, 'hovered');
+
+        if (startDate && !endDate && focusedInput === END_DATE) {
+          if (isAfterDay(hoverDate, startDate)) {
+            const endSpan = hoverDate.clone().add(1, 'day');
+            modifiers = this.deleteModifierFromRange(modifiers, startDate, endSpan, 'hovered-span');
+          }
+
+          if (!this.isBlocked(day) && isAfterDay(day, startDate)) {
+            const endSpan = day.clone().add(1, 'day');
+            modifiers = this.addModifierToRange(modifiers, startDate, endSpan, 'hovered-span');
+          }
         }
 
-        if (!this.isBlocked(day) && isBeforeDay(day, endDate)) {
-          modifiers = this.addModifierToRange(modifiers, day, endDate, 'hovered-span');
-        }
-      }
+        if (!startDate && endDate && focusedInput === START_DATE) {
+          if (isBeforeDay(hoverDate, endDate)) {
+            modifiers = this.deleteModifierFromRange(modifiers, hoverDate, endDate, 'hovered-span');
+          }
 
-      if (startDate) {
-        if (isSameDay(day, startDate)) {
-          const newStartSpan = startDate.clone().add(1, 'day');
-          const newEndSpan = startDate.clone().add(minimumNights + 1, 'days');
-          modifiers = this.addModifierToRange(
-            modifiers,
-            newStartSpan,
-            newEndSpan,
-            'after-hovered-start',
-          );
+          if (!this.isBlocked(day) && isBeforeDay(day, endDate)) {
+            modifiers = this.addModifierToRange(modifiers, day, endDate, 'hovered-span');
+          }
+        }
+
+        if (startDate) {
+          const startSpan = startDate.clone().add(1, 'day');
+          const endSpan = startDate.clone().add(minimumNights + 1, 'days');
+          modifiers = this.deleteModifierFromRange(modifiers, startSpan, endSpan, 'after-hovered-start');
+
+          if (isSameDay(day, startDate)) {
+            const newStartSpan = startDate.clone().add(1, 'day');
+            const newEndSpan = startDate.clone().add(minimumNights + 1, 'days');
+            modifiers = this.addModifierToRange(
+              modifiers,
+              newStartSpan,
+              newEndSpan,
+              'after-hovered-start',
+            );
+          }
         }
       }
 
       this.setState({
         hoverDate: day,
+        dateOffset,
         visibleDays: {
           ...visibleDays,
           ...modifiers,
@@ -522,11 +588,15 @@ export default class DayPickerRangeController extends React.Component {
 
   onDayMouseLeave(day) {
     const { startDate, endDate, minimumNights } = this.props;
-    const { hoverDate, visibleDays } = this.state;
+    const { hoverDate, visibleDays, dateOffset } = this.state;
     if (this.isTouchDevice || !hoverDate) return;
 
     let modifiers = {};
     modifiers = this.deleteModifier(modifiers, hoverDate, 'hovered');
+
+    if (dateOffset) {
+      modifiers = this.deleteModifierFromRange(modifiers, this.state.dateOffset.start, this.state.dateOffset.end, 'hovered-offset');
+    }
 
     if (startDate && !endDate && isAfterDay(hoverDate, startDate)) {
       const endSpan = hoverDate.clone().add(1, 'day');
@@ -571,9 +641,9 @@ export default class DayPickerRangeController extends React.Component {
         ...newVisibleDays,
         ...this.getModifiers(prevMonthVisibleDays),
       },
+    }, () => {
+      onPrevMonthClick(newCurrentMonth.clone());
     });
-
-    onPrevMonthClick(newCurrentMonth.clone());
   }
 
   onNextMonthClick() {
@@ -595,9 +665,9 @@ export default class DayPickerRangeController extends React.Component {
         ...newVisibleDays,
         ...this.getModifiers(nextMonthVisibleDays),
       },
+    }, () => {
+      onNextMonthClick(newCurrentMonth.clone());
     });
-
-    onNextMonthClick(newCurrentMonth.clone());
   }
 
   onMultiplyScrollableMonths() {
@@ -894,6 +964,16 @@ export default class DayPickerRangeController extends React.Component {
     return isSameDay(day, this.today);
   }
 
+  isFirstDayOfWeek(day) {
+    const { firstDayOfWeek } = this.props;
+    return day.day() === (firstDayOfWeek || moment.localeData().firstDayOfWeek());
+  }
+
+  isLastDayOfWeek(day) {
+    const { firstDayOfWeek } = this.props;
+    return day.day() === ((firstDayOfWeek || moment.localeData().firstDayOfWeek()) + 6) % 7;
+  }
+
   render() {
     const {
       numberOfMonths,
@@ -912,6 +992,7 @@ export default class DayPickerRangeController extends React.Component {
       renderCalendarDay,
       renderDayContents,
       renderCalendarInfo,
+      calendarInfoPosition,
       onBlur,
       isFocused,
       showKeyboardShortcuts,
@@ -950,6 +1031,7 @@ export default class DayPickerRangeController extends React.Component {
         renderCalendarDay={renderCalendarDay}
         renderDayContents={renderDayContents}
         renderCalendarInfo={renderCalendarInfo}
+        calendarInfoPosition={calendarInfoPosition}
         firstDayOfWeek={firstDayOfWeek}
         hideKeyboardShortcutsPanel={hideKeyboardShortcutsPanel}
         isFocused={isFocused}

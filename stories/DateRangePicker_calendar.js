@@ -36,7 +36,6 @@ const TestCustomInfoPanel = () => (
   <div
     style={{
       padding: '10px 21px',
-      borderTop: '1px solid #dce0e0',
       color: '#484848',
     }}
   >
@@ -130,7 +129,7 @@ storiesOf('DRP - Calendar Props', module)
       autoFocus
     />
   ))
-  .addWithInfo('with info panel', () => (
+  .addWithInfo('with info panel default', () => (
     <DateRangePickerWrapper
       renderCalendarInfo={() => (
         <TestCustomInfoPanel />
@@ -138,7 +137,43 @@ storiesOf('DRP - Calendar Props', module)
       autoFocus
     />
   ))
-  .addWithInfo('with keyboard shorcuts panel hidden', () => (
+  .addWithInfo('with info panel before', () => (
+    <DateRangePickerWrapper
+      calendarInfoPosition="before"
+      renderCalendarInfo={() => (
+        <TestCustomInfoPanel />
+      )}
+      autoFocus
+    />
+  ))
+  .addWithInfo('with info panel after', () => (
+    <DateRangePickerWrapper
+      calendarInfoPosition="after"
+      renderCalendarInfo={() => (
+        <TestCustomInfoPanel />
+      )}
+      autoFocus
+    />
+  ))
+  .addWithInfo('with info panel bottom', () => (
+    <DateRangePickerWrapper
+      calendarInfoPosition="bottom"
+      renderCalendarInfo={() => (
+        <TestCustomInfoPanel />
+      )}
+      autoFocus
+    />
+  ))
+  .addWithInfo('with info panel top', () => (
+    <DateRangePickerWrapper
+      calendarInfoPosition="top"
+      renderCalendarInfo={() => (
+        <TestCustomInfoPanel />
+      )}
+      autoFocus
+    />
+  ))
+  .addWithInfo('with keyboard shortcuts panel hidden', () => (
     <DateRangePickerWrapper
       hideKeyboardShortcutsPanel
       autoFocus

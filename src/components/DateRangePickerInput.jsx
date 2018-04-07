@@ -9,6 +9,7 @@ import openDirectionShape from '../shapes/OpenDirectionShape';
 
 import DateInput from './DateInput';
 import IconPositionShape from '../shapes/IconPositionShape';
+import DisabledShape from '../shapes/DisabledShape';
 
 import RightArrow from './RightArrow';
 import LeftArrow from './LeftArrow';
@@ -48,7 +49,7 @@ const propTypes = forbidExtraProps({
   isStartDateFocused: PropTypes.bool,
   isEndDateFocused: PropTypes.bool,
   showClearDates: PropTypes.bool,
-  disabled: PropTypes.bool,
+  disabled: DisabledShape,
   required: PropTypes.bool,
   readOnly: PropTypes.bool,
   openDirection: openDirectionShape,
@@ -61,6 +62,7 @@ const propTypes = forbidExtraProps({
   noBorder: PropTypes.bool,
   block: PropTypes.bool,
   small: PropTypes.bool,
+  regular: PropTypes.bool,
   verticalSpacing: nonNegativeInteger,
 
   // accessibility
@@ -107,6 +109,7 @@ const defaultProps = {
   noBorder: false,
   block: false,
   small: false,
+  regular: false,
   verticalSpacing: undefined,
 
   // accessibility
@@ -155,6 +158,7 @@ function DateRangePickerInput({
   block,
   verticalSpacing,
   small,
+  regular,
   styles,
 }) {
   const calendarIcon = customInputIcon || (
@@ -197,6 +201,8 @@ function DateRangePickerInput({
       {calendarIcon}
     </button>
   );
+  const startDateDisabled = disabled === START_DATE || disabled;
+  const endDateDisabled = disabled === END_DATE || disabled;
 
   return (
     <div
@@ -218,7 +224,7 @@ function DateRangePickerInput({
         screenReaderMessage={screenReaderText}
         focused={isStartDateFocused}
         isFocused={isFocused}
-        disabled={disabled}
+        disabled={startDateDisabled}
         required={required}
         readOnly={readOnly}
         showCaret={showCaret}
@@ -230,6 +236,7 @@ function DateRangePickerInput({
         onKeyDownQuestionMark={onKeyDownQuestionMark}
         verticalSpacing={verticalSpacing}
         small={small}
+        regular={regular}
       />
 
       <div
@@ -247,7 +254,7 @@ function DateRangePickerInput({
         screenReaderMessage={screenReaderText}
         focused={isEndDateFocused}
         isFocused={isFocused}
-        disabled={disabled}
+        disabled={endDateDisabled}
         required={required}
         readOnly={readOnly}
         showCaret={showCaret}
@@ -259,6 +266,7 @@ function DateRangePickerInput({
         onKeyDownQuestionMark={onKeyDownQuestionMark}
         verticalSpacing={verticalSpacing}
         small={small}
+        regular={regular}
       />
 
       {showClearDates && (
